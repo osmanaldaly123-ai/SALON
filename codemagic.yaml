@@ -1,47 +1,122 @@
-# Codemagic CI/CD — Salon Customer App (com.salonbooking.app)
+# Codemagic CI/CD — Salon Customer App
+# Bundle / package: com.salonbooking.app
+#
+# ── Codemagic UI setup (required before production-release) ──
+#
+# 1) Team settings → Code signing identities → Android
+#    - Upload: upload-keystore.jks
+#    - Reference name: salon_upload_keystore
+#    - Codemagic injects: CM_KEYSTORE_PATH, CM_KEYSTORE_PASSWORD,
+#      CM_KEY_ALIAS, CM_KEY_PASSWORD
+#
+# 2) Team settings → Code signing identities → iOS
+#    - Connect Apple Developer account
+#    - Create / select distribution certificate + App Store profile
+#      for bundle id: com.salonbooking.app
+#
+# 3) Team settings → Integrations (optional, for store upload)
+#    - App Store Connect → name: codemagic
+#
+# 4) Environment variable groups (recommended group: salon_production)
+#    - API_BASE_URL          → production REST API (required for live builds)
+#    - GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS → Play Console JSON (optional)
+#
 # Docs: https://docs.codemagic.io/yaml/yaml-getting-started/
-#
-# Setup in Codemagic UI (Team settings → Code signing):
-#   Android: upload upload-keystore.jks → reference name: salon_upload_keystore
-#   iOS: connect Apple Developer → bundle com.salonbooking.app
-#
-# Optional env var in Codemagic (Environment variables):
-#   API_BASE_URL = https://your-api.com/v1
 
 definitions:
-  environment: &base_env
+  environment_shared: &environment_shared
     flutter: stable
     xcode: latest
     cocoapods: default
     vars:
-      API_BASE_URL: https://api.example.com/v1
       PACKAGE_NAME: com.salonbooking.app
+      BUNDLE_ID: com.salonbooking.app
+      # Override in Codemagic UI → Environment variables → group salon_production
+      API_BASE_URL: https://api.example.com/v1
+      FLUTTER_BUILD_ARGS: --release --dart-define=API_BASE_URL=$API_BASE_URL
 
   scripts:
     - &flutter_pub_get
       name: Get Flutter packages
       script: flutter pub get
-    - &setup_android_signing
-      name: Set up Android signing
+
+    - &print_build_info
+      name: Print build info
       script: |
-        cat >> "$CM_BUILD_DIR/android/key.properties" <<EOF
+        echo "Package: $PACKAGE_NAME"
+        echo "Bundle ID: $BUNDLE_ID"
+        echo "API_BASE_URL: $API_BASE_URL"
+        flutter --version
+        grep '^version:' pubspec.yaml
+
+    - &setup_android_signing
+      name: Set up Android code signing
+      script: |
+        # Writes key.properties consumed by android/app/build.gradle.kts
+        cat > "$CM_BUILD_DIR/android/key.properties" <<EOF
         storePassword=$CM_KEYSTORE_PASSWORD
         keyPassword=$CM_KEY_PASSWORD
         keyAlias=$CM_KEY_ALIAS
         storeFile=$CM_KEYSTORE_PATH
         EOF
-    - &ios_pod_install
-      name: Install CocoaPods
+        echo "Android signing configured (alias: $CM_KEY_ALIAS)"
+
+    - &build_android_apk
+      name: Build Android APK (release)
       script: |
-        find . -name "Podfile" -execdir pod install \;
+        flutter build apk $FLUTTER_BUILD_ARGS
+        ls -la build/app/outputs/flutter-apk/
+
+    - &build_android_aab
+      name: Build Android App Bundle (Play Store)
+      script: |
+        flutter build appbundle $FLUTTER_BUILD_ARGS
+        ls -la build/app/outputs/bundle/release/
+
+    - &setup_ios_signing
+      name: Set up iOS code signing
+      script: xcode-project use-profiles
+
+    - &install_ios_pods
+      name: Install CocoaPods
+      script: find . -name "Podfile" -execdir pod install \;
+
+    - &build_ios_ipa
+      name: Build iOS IPA (App Store / TestFlight)
+      script: |
+        flutter build ipa $FLUTTER_BUILD_ARGS \
+          --export-options-plist="$HOME/export_options.plist"
+        ls -la build/ios/ipa/
+
+  android_artifacts: &android_artifacts
+    - build/app/outputs/flutter-apk/app-release.apk
+    - build/app/outputs/flutter-apk/*-release.apk
+    - build/app/outputs/bundle/release/app-release.aab
+    - build/app/outputs/mapping/release/mapping.txt
+    - flutter_drive.log
+  ios_artifacts: &ios_artifacts
+    - build/ios/ipa/*.ipa
+    - build/ios/archive/Runner.xcarchive
+    - flutter_drive.log
+    - /tmp/xcodebuild_logs/*.log
+  production_artifacts: &production_artifacts
+    - build/app/outputs/flutter-apk/app-release.apk
+    - build/app/outputs/flutter-apk/*-release.apk
+    - build/app/outputs/bundle/release/app-release.aab
+    - build/app/outputs/mapping/release/mapping.txt
+    - build/ios/ipa/*.ipa
+    - build/ios/archive/Runner.xcarchive
+    - flutter_drive.log
+    - /tmp/xcodebuild_logs/*.log
 
 workflows:
+  # ── CI: analyze + unit tests (no signing required) ──
   flutter-quality:
     name: Flutter Analyze & Test
     max_build_duration: 30
     instance_type: mac_mini_m2
     environment:
-      <<: *base_env
+      <<: *environment_shared
     triggering:
       events:
         - push
@@ -57,62 +132,136 @@ workflows:
       - name: Flutter test
         script: flutter test
 
-  android-release:
-    name: Android Release (APK + AAB)
+  # ── Production: Android APK + AAB ──
+  production-android:
+    name: Production — Android
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      <<: *base_env
+      <<: *environment_shared
+      groups:
+        - salon_production # optional: API_BASE_URL, Play credentials
       android_signing:
-        - salon_upload_keystore
+        - salon_upload_keystore # ← upload keystore in Codemagic UI
     triggering:
       events:
         - push
+        - tag
       branch_patterns:
         - pattern: main
           include: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
     scripts:
       - *flutter_pub_get
+      - *print_build_info
       - *setup_android_signing
-      - name: Build Android APK
-        script: |
-          flutter build apk --release \
-            --dart-define=API_BASE_URL=$API_BASE_URL
-      - name: Build Android App Bundle
-        script: |
-          flutter build appbundle --release \
-            --dart-define=API_BASE_URL=$API_BASE_URL
-    artifacts:
-      - build/**/outputs/**/*.apk
-      - build/**/outputs/**/*.aab
-      - flutter_drive.log
+      - *build_android_apk
+      - *build_android_aab
+    artifacts: *android_artifacts
+    publishing:
+      email:
+        recipients:
+          - osmaneldaly515@gmail.com
+        notify:
+          success: true
+          failure: true
+      # Uncomment after adding GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS to salon_production group:
+      # google_play:
+      #   credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: internal
+      #   submit_as_draft: true
 
-  ios-release:
-    name: iOS Release (IPA)
+  # ── Production: iOS IPA ──
+  production-ios:
+    name: Production — iOS
     max_build_duration: 90
     instance_type: mac_mini_m2
     environment:
-      <<: *base_env
+      <<: *environment_shared
+      groups:
+        - salon_production
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.salonbooking.app
+    integrations:
+      app_store_connect: codemagic # optional — enable for TestFlight auto-upload
     triggering:
       events:
         - push
+        - tag
       branch_patterns:
         - pattern: main
           include: true
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
     scripts:
       - *flutter_pub_get
-      - *ios_pod_install
-      - name: Set up code signing
-        script: xcode-project use-profiles
-      - name: Build iOS IPA
-        script: |
-          flutter build ipa --release \
-            --dart-define=API_BASE_URL=$API_BASE_URL \
-            --export-options-plist=$HOME/export_options.plist
-    artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-      - flutter_drive.log
+      - *print_build_info
+      - *install_ios_pods
+      - *setup_ios_signing
+      - *build_ios_ipa
+    artifacts: *ios_artifacts
+    publishing:
+      email:
+        recipients:
+          - osmaneldaly515@gmail.com
+        notify:
+          success: true
+          failure: true
+      # Uncomment after App Store Connect integration is configured:
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true
+      #   beta_groups:
+      #     - Internal Testers
+
+  # ── Production: full release (Android + iOS in one run) ──
+  production-release:
+    name: Production — Android + iOS
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      <<: *environment_shared
+      groups:
+        - salon_production
+      android_signing:
+        - salon_upload_keystore
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.salonbooking.app
+    integrations:
+      app_store_connect: codemagic
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+    scripts:
+      - *flutter_pub_get
+      - *print_build_info
+      # Android
+      - *setup_android_signing
+      - *build_android_apk
+      - *build_android_aab
+      # iOS
+      - *install_ios_pods
+      - *setup_ios_signing
+      - *build_ios_ipa
+    artifacts: *production_artifacts
+    publishing:
+      email:
+        recipients:
+          - osmaneldaly515@gmail.com
+        notify:
+          success: true
+          failure: true
+      # google_play:
+      #   credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+      #   track: production
+      # app_store_connect:
+      #   auth: integration
+      #   submit_to_testflight: true
