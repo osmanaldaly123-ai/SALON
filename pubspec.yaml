@@ -1,0 +1,57 @@
+name: my_ewesome_app
+description: "Salon Customer App - Browse salons, book services, and manage appointments."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  intl: any
+
+  # State Management
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.7
+
+  # Navigation
+  go_router: ^15.1.2
+
+  # Network
+  dio: ^5.8.0+1
+
+  # Dependency Injection
+  get_it: ^8.0.3
+
+  # Local Storage
+  shared_preferences: ^2.5.3
+  flutter_secure_storage: ^9.2.4
+
+  # UI
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  shadcn_ui: ^0.55.0
+
+  # Firebase
+  firebase_core: ^3.13.0
+  firebase_analytics: ^11.6.0
+  firebase_messaging: ^15.2.5
+  permission_handler: ^12.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
