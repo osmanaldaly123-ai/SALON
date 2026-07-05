@@ -1,0 +1,118 @@
+# Codemagic CI/CD — Salon Customer App (com.salonbooking.app)
+# Docs: https://docs.codemagic.io/yaml/yaml-getting-started/
+#
+# Setup in Codemagic UI (Team settings → Code signing):
+#   Android: upload upload-keystore.jks → reference name: salon_upload_keystore
+#   iOS: connect Apple Developer → bundle com.salonbooking.app
+#
+# Optional env var in Codemagic (Environment variables):
+#   API_BASE_URL = https://your-api.com/v1
+
+definitions:
+  environment: &base_env
+    flutter: stable
+    xcode: latest
+    cocoapods: default
+    vars:
+      API_BASE_URL: https://api.example.com/v1
+      PACKAGE_NAME: com.salonbooking.app
+
+  scripts:
+    - &flutter_pub_get
+      name: Get Flutter packages
+      script: flutter pub get
+    - &setup_android_signing
+      name: Set up Android signing
+      script: |
+        cat >> "$CM_BUILD_DIR/android/key.properties" <<EOF
+        storePassword=$CM_KEYSTORE_PASSWORD
+        keyPassword=$CM_KEY_PASSWORD
+        keyAlias=$CM_KEY_ALIAS
+        storeFile=$CM_KEYSTORE_PATH
+        EOF
+    - &ios_pod_install
+      name: Install CocoaPods
+      script: |
+        find . -name "Podfile" -execdir pod install \;
+
+workflows:
+  flutter-quality:
+    name: Flutter Analyze & Test
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      <<: *base_env
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+        - pattern: develop
+          include: true
+    scripts:
+      - *flutter_pub_get
+      - name: Flutter analyze
+        script: flutter analyze
+      - name: Flutter test
+        script: flutter test
+
+  android-release:
+    name: Android Release (APK + AAB)
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      <<: *base_env
+      android_signing:
+        - salon_upload_keystore
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - *flutter_pub_get
+      - *setup_android_signing
+      - name: Build Android APK
+        script: |
+          flutter build apk --release \
+            --dart-define=API_BASE_URL=$API_BASE_URL
+      - name: Build Android App Bundle
+        script: |
+          flutter build appbundle --release \
+            --dart-define=API_BASE_URL=$API_BASE_URL
+    artifacts:
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/*.aab
+      - flutter_drive.log
+
+  ios-release:
+    name: iOS Release (IPA)
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    environment:
+      <<: *base_env
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.salonbooking.app
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - *flutter_pub_get
+      - *ios_pod_install
+      - name: Set up code signing
+        script: xcode-project use-profiles
+      - name: Build iOS IPA
+        script: |
+          flutter build ipa --release \
+            --dart-define=API_BASE_URL=$API_BASE_URL \
+            --export-options-plist=$HOME/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
