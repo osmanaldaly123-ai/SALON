@@ -1,0 +1,36 @@
+{
+  "rules": {
+    "salons": {
+      ".read": true,
+      ".write": false
+    },
+    "services": {
+      ".read": true,
+      ".write": false
+    },
+    "deals": {
+      ".read": true,
+      ".write": false
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid",
+        "bookings": {
+          "$bookingId": {
+            ".read": "auth != null && auth.uid == $uid",
+            ".write": "auth != null && auth.uid == $uid"
+          }
+        }
+      }
+    },
+    "taken_slots": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "meta": {
+      ".read": true,
+      ".write": false
+    }
+  }
+}

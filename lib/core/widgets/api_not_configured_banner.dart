@@ -4,13 +4,13 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../config/app_config.dart';
 import '../../l10n/app_localizations.dart';
 
-/// Shown on auth screens when [AppConfig.isApiConfigured] is false.
+/// Shown on auth screens when neither REST API nor Firebase backend is configured.
 class ApiNotConfiguredBanner extends StatelessWidget {
   const ApiNotConfiguredBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (AppConfig.isApiConfigured) {
+    if (AppConfig.isApiConfigured || AppConfig.isFirebaseBackend) {
       return const SizedBox.shrink();
     }
 

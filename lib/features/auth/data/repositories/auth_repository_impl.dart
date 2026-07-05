@@ -1,16 +1,23 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../../core/config/env.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/firebase/firebase_auth_client.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(this._remote, this._storage);
+  AuthRepositoryImpl(
+    this._remote,
+    this._storage, [
+    this._firebaseAuth,
+  ]);
 
   final AuthRemoteDataSource _remote;
   final FlutterSecureStorage _storage;
+  final FirebaseAuthClient? _firebaseAuth;
 
   @override
   Future<User> login({
@@ -60,6 +67,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<bool> isLoggedIn() async {
+    if (Env.isFirebaseBackend && _firebaseAuth != null) {
+      return _firebaseAuth.currentUser != null;
+    }
     final token = await _storage.read(key: AppConstants.tokenKey);
     return token != null && token.isNotEmpty;
   }

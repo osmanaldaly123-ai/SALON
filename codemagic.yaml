@@ -33,7 +33,11 @@ definitions:
       BUNDLE_ID: com.salonbooking.app
       # Override in Codemagic UI → Environment variables → group salon_production
       API_BASE_URL: https://api.example.com/v1
-      FLUTTER_BUILD_ARGS: --release --dart-define=API_BASE_URL=$API_BASE_URL
+      FIREBASE_DATABASE_URL: https://system-42ab7-default-rtdb.firebaseio.com
+      FLUTTER_BUILD_ARGS: >-
+        --release
+        --dart-define=API_BASE_URL=$API_BASE_URL
+        --dart-define=FIREBASE_DATABASE_URL=$FIREBASE_DATABASE_URL
 
   scripts:
     - &flutter_pub_get
@@ -110,7 +114,7 @@ definitions:
     - /tmp/xcodebuild_logs/*.log
 
 workflows:
-  # ── CI: analyze + unit tests (no signing required) ──
+  # ── CI: analyze + unit tests only (develop branch) ──
   flutter-quality:
     name: Flutter Analyze & Test
     max_build_duration: 30
@@ -121,8 +125,6 @@ workflows:
       events:
         - push
       branch_patterns:
-        - pattern: main
-          include: true
         - pattern: develop
           include: true
     scripts:
@@ -132,27 +134,22 @@ workflows:
       - name: Flutter test
         script: flutter test
 
-  # ── Production: analyze + test, then Android APK + iOS IPA ──
+  # ── Production: analyze + test + Android APK (iOS → use production-ios when Apple is ready) ──
   flutter-release:
     name: Flutter Release (Production)
-    max_build_duration: 120
+    max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
       <<: *environment_shared
-      groups:
-        - salon_production
       android_signing:
         - salon_upload_keystore
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.salonbooking.app
+      # iOS signing removed here — requires Apple Developer + provisioning profile.
+      # After setup, run workflow: production-ios
     triggering:
       events:
         - push
       branch_patterns:
         - pattern: main
-          include: true
-        - pattern: develop
           include: true
     scripts:
       - *flutter_pub_get
@@ -166,14 +163,11 @@ workflows:
         script: |
           flutter build apk --release --dart-define=API_BASE_URL=$API_BASE_URL
           ls -la build/app/outputs/flutter-apk/
-      - *install_ios_pods
-      - *setup_ios_signing
-      - name: Build iOS IPA (release)
+      - name: Build Android App Bundle (release)
         script: |
-          flutter build ipa --release --dart-define=API_BASE_URL=$API_BASE_URL \
-            --export-options-plist="$HOME/export_options.plist"
-          ls -la build/ios/ipa/
-    artifacts: *production_artifacts
+          flutter build appbundle --release --dart-define=API_BASE_URL=$API_BASE_URL
+          ls -la build/app/outputs/bundle/release/
+    artifacts: *android_artifacts
     publishing:
       email:
         recipients:
@@ -189,8 +183,6 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       <<: *environment_shared
-      groups:
-        - salon_production # optional: API_BASE_URL, Play credentials
       android_signing:
         - salon_upload_keystore # ← upload keystore in Codemagic UI
     triggering:

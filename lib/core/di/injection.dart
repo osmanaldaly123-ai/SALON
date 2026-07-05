@@ -2,26 +2,35 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/env.dart';
+import '../firebase/firebase_auth_client.dart';
+import '../firebase/firebase_initializer.dart';
+import '../firebase/realtime_database_client.dart';
 import '../network/api_client.dart';
 import '../services/guest_session_service.dart';
 import '../services/locale_service.dart';
 import '../services/session_expired_handler.dart';
+import '../../features/auth/data/datasources/auth_firebase_datasource.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/booking/data/datasources/booking_firebase_datasource.dart';
 import '../../features/booking/data/datasources/booking_remote_datasource.dart';
 import '../../features/booking/data/repositories/booking_repository_impl.dart';
 import '../../features/booking/domain/repositories/booking_repository.dart';
+import '../../features/deals/data/datasources/deals_firebase_datasource.dart';
 import '../../features/deals/data/datasources/deals_remote_datasource.dart';
 import '../../features/deals/data/repositories/deals_repository_impl.dart';
 import '../../features/deals/domain/repositories/deals_repository.dart';
+import '../../features/profile/data/datasources/profile_firebase_datasource.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/reviews/data/datasources/reviews_remote_datasource.dart';
 import '../../features/reviews/data/repositories/reviews_repository_impl.dart';
 import '../../features/reviews/domain/repositories/reviews_repository.dart';
+import '../../features/salons/data/datasources/salons_firebase_datasource.dart';
 import '../../features/salons/data/datasources/salons_remote_datasource.dart';
 import '../../features/salons/data/repositories/salons_repository_impl.dart';
 import '../../features/salons/domain/repositories/salons_repository.dart';
@@ -34,6 +43,7 @@ import '../../features/profile/presentation/cubit/booking_history_cubit.dart';
 import '../../features/reviews/presentation/cubit/reviews_cubit.dart';
 import '../../features/booking/presentation/cubit/booking_flow_cubit.dart';
 import '../../features/deals/presentation/cubit/deals_cubit.dart';
+import '../../features/services/data/datasources/services_firebase_datasource.dart';
 import '../../features/services/data/datasources/services_remote_datasource.dart';
 import '../../features/services/data/repositories/services_repository_impl.dart';
 import '../../features/services/domain/repositories/services_repository.dart';
@@ -59,14 +69,51 @@ Future<void> setupDependencies() async {
   // Core
   sl.registerLazySingleton<ApiClient>(() => ApiClient(storage: sl()));
 
+  if (Env.isFirebaseBackend) {
+    await FirebaseInitializer.ensureInitialized();
+    sl.registerLazySingleton<FirebaseAuthClient>(FirebaseAuthClient.new);
+    sl.registerLazySingleton<RealtimeDatabaseClient>(
+      RealtimeDatabaseClient.new,
+    );
+    sl.registerLazySingleton<SalonsFirebaseDataSource>(
+      () => SalonsFirebaseDataSourceImpl(sl()),
+    );
+    sl.registerLazySingleton<DealsFirebaseDataSource>(
+      () => DealsFirebaseDataSourceImpl(sl()),
+    );
+    sl.registerLazySingleton<ServicesFirebaseDataSource>(
+      () => ServicesFirebaseDataSourceImpl(sl()),
+    );
+    sl.registerLazySingleton<AuthRemoteDataSource>(
+      () => AuthFirebaseDataSource(sl(), sl()),
+    );
+    sl.registerLazySingleton<BookingRemoteDataSource>(
+      () => BookingFirebaseDataSource(sl(), sl()),
+    );
+    sl.registerLazySingleton<ProfileRemoteDataSource>(
+      () => ProfileFirebaseDataSource(sl(), sl()),
+    );
+  } else {
+    sl.registerLazySingleton<AuthRemoteDataSource>(
+      () => AuthRemoteDataSourceImpl(sl()),
+    );
+    sl.registerLazySingleton<BookingRemoteDataSource>(
+      () => BookingRemoteDataSourceImpl(sl()),
+    );
+    sl.registerLazySingleton<ProfileRemoteDataSource>(
+      () => ProfileRemoteDataSourceImpl(sl()),
+    );
+  }
+
   sl.registerLazySingleton<LocaleService>(() => LocaleService(sl()));
 
   // Auth
-  sl.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(sl()),
-  );
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(sl(), sl()),
+    () => AuthRepositoryImpl(
+      sl(),
+      sl(),
+      sl.isRegistered<FirebaseAuthClient>() ? sl() : null,
+    ),
   );
   sl.registerLazySingleton<AuthBloc>(() => AuthBloc(sl()));
 
@@ -75,7 +122,11 @@ Future<void> setupDependencies() async {
     () => SalonsRemoteDataSourceImpl(sl()),
   );
   sl.registerLazySingleton<SalonsRepository>(
-    () => SalonsRepositoryImpl(sl(), sl()),
+    () => SalonsRepositoryImpl(
+      sl(),
+      sl.isRegistered<SalonsFirebaseDataSource>() ? sl() : null,
+      sl(),
+    ),
   );
 
   // Services
@@ -83,7 +134,11 @@ Future<void> setupDependencies() async {
     () => ServicesRemoteDataSourceImpl(sl()),
   );
   sl.registerLazySingleton<ServicesRepository>(
-    () => ServicesRepositoryImpl(sl(), sl()),
+    () => ServicesRepositoryImpl(
+      sl(),
+      sl.isRegistered<ServicesFirebaseDataSource>() ? sl() : null,
+      sl(),
+    ),
   );
 
   // Deals
@@ -91,13 +146,14 @@ Future<void> setupDependencies() async {
     () => DealsRemoteDataSourceImpl(sl()),
   );
   sl.registerLazySingleton<DealsRepository>(
-    () => DealsRepositoryImpl(sl(), sl()),
+    () => DealsRepositoryImpl(
+      sl(),
+      sl.isRegistered<DealsFirebaseDataSource>() ? sl() : null,
+      sl(),
+    ),
   );
 
   // Booking
-  sl.registerLazySingleton<BookingRemoteDataSource>(
-    () => BookingRemoteDataSourceImpl(sl()),
-  );
   sl.registerLazySingleton<BookingRepository>(
     () => BookingRepositoryImpl(sl()),
   );
@@ -111,9 +167,6 @@ Future<void> setupDependencies() async {
   );
 
   // Profile
-  sl.registerLazySingleton<ProfileRemoteDataSource>(
-    () => ProfileRemoteDataSourceImpl(sl()),
-  );
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepositoryImpl(sl()),
   );

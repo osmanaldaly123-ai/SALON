@@ -77,14 +77,21 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.salonbooking.app',
   );
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDMLf0403DF71idhSqs3zmUgax-o9S7qqo',
-    appId: '1:920429460532:web:4761f5e8f8a0a10dddde61',
-    messagingSenderId: '920429460532',
-    projectId: 'salonbookingapp-dd24d',
-    authDomain: 'salonbookingapp-dd24d.firebaseapp.com',
-    storageBucket: 'salonbookingapp-dd24d.firebasestorage.app',
-    measurementId: 'G-066R23004V',
+    apiKey: 'AIzaSyDDbwjTOVJtYdOXIfVlVFwGPJ02iSZ1ds0',
+    appId: '1:551770431072:web:e2b55c6f9cf072b3a0ad05',
+    messagingSenderId: '551770431072',
+    projectId: 'system-42ab7',
+    authDomain: 'system-42ab7.firebaseapp.com',
+    storageBucket: 'system-42ab7.firebasestorage.app',
+    measurementId: 'G-Y6JP2TYDE8',
   );
+
+  /// Realtime Database project (system-42ab7) — uses web app credentials.
+  static const FirebaseOptions databaseProject = web;
+
+  /// Default RTDB URL — verify in Firebase Console → Realtime Database.
+  static const String defaultDatabaseUrl =
+      'https://system-42ab7-default-rtdb.firebaseio.com';
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAo8xEqXeZgJjOL21SCFTW54Ms54oncXXA',
@@ -96,12 +103,12 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDMLf0403DF71idhSqs3zmUgax-o9S7qqo',
-    appId: '1:920429460532:web:bb938dc894ffa2bcddde61',
-    messagingSenderId: '920429460532',
-    projectId: 'salonbookingapp-dd24d',
-    authDomain: 'salonbookingapp-dd24d.firebaseapp.com',
-    storageBucket: 'salonbookingapp-dd24d.firebasestorage.app',
-    measurementId: 'G-7RP8YRN3LR',
+    apiKey: 'AIzaSyDDbwjTOVJtYdOXIfVlVFwGPJ02iSZ1ds0',
+    appId: '1:551770431072:web:e2b55c6f9cf072b3a0ad05',
+    messagingSenderId: '551770431072',
+    projectId: 'system-42ab7',
+    authDomain: 'system-42ab7.firebaseapp.com',
+    storageBucket: 'system-42ab7.firebasestorage.app',
+    measurementId: 'G-Y6JP2TYDE8',
   );
 }

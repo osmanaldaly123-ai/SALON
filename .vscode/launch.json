@@ -8,11 +8,30 @@
       "program": "lib/main.dart"
     },
     {
+      "name": "Salon (Firebase system-42ab7)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=FIREBASE_DATABASE_URL=https://system-42ab7-default-rtdb.firebaseio.com"
+      ]
+    },
+    {
       "name": "Salon (with API)",
       "request": "launch",
       "type": "dart",
       "program": "lib/main.dart",
       "args": [
+        "--dart-define=API_BASE_URL=https://your-api.com/v1"
+      ]
+    },
+    {
+      "name": "Salon (Firebase + API)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=FIREBASE_DATABASE_URL=https://system-42ab7-default-rtdb.firebaseio.com",
         "--dart-define=API_BASE_URL=https://your-api.com/v1"
       ]
     },
@@ -23,7 +42,7 @@
       "program": "lib/main.dart",
       "flutterMode": "release",
       "args": [
-        "--dart-define=API_BASE_URL=https://your-api.com/v1"
+        "--dart-define=FIREBASE_DATABASE_URL=https://system-42ab7-default-rtdb.firebaseio.com"
       ]
     }
   ]

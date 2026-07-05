@@ -1,0 +1,84 @@
+{
+  "salons": {
+    "salon-1": {
+      "id": "salon-1",
+      "name": "صالون الأناقة",
+      "description": "صالون نسائي متكامل للعناية بالشعر والبشرة",
+      "image_url": "https://picsum.photos/seed/salon1/400/300",
+      "rating": 4.8,
+      "address": "حي النخيل، الرياض",
+      "distance": 1.2
+    },
+    "salon-2": {
+      "id": "salon-2",
+      "name": "Glow Beauty",
+      "description": "Premium beauty and wellness studio",
+      "image_url": "https://picsum.photos/seed/salon2/400/300",
+      "rating": 4.6,
+      "address": "Al Olaya, Riyadh",
+      "distance": 2.5
+    },
+    "salon-3": {
+      "id": "salon-3",
+      "name": "صالون لمسة فنية",
+      "description": "مكياج، أظافر، وعناية بالبشرة",
+      "image_url": "https://picsum.photos/seed/salon3/400/300",
+      "rating": 4.9,
+      "address": "حي الملقا، الرياض",
+      "distance": 3.1
+    }
+  },
+  "services": {
+    "svc-1": {
+      "id": "svc-1",
+      "salon_id": "salon-1",
+      "name": "قص وتصفيف",
+      "description": "قص شعر مع تصفيف احترافي",
+      "price": 120,
+      "duration_minutes": 45,
+      "image_url": "https://picsum.photos/seed/svc1/200/200"
+    },
+    "svc-2": {
+      "id": "svc-2",
+      "salon_id": "salon-1",
+      "name": "صبغة كاملة",
+      "description": "صبغة شعر مع علاج",
+      "price": 250,
+      "duration_minutes": 90,
+      "image_url": "https://picsum.photos/seed/svc2/200/200"
+    },
+    "svc-3": {
+      "id": "svc-3",
+      "salon_id": "salon-2",
+      "name": "Facial Treatment",
+      "description": "Deep cleansing facial",
+      "price": 180,
+      "duration_minutes": 60,
+      "image_url": "https://picsum.photos/seed/svc3/200/200"
+    }
+  },
+  "deals": {
+    "deal-1": {
+      "id": "deal-1",
+      "salon_id": "salon-1",
+      "title": "خصم 30% على قص الشعر",
+      "description": "عرض محدود هذا الأسبوع",
+      "discount_percent": 30,
+      "image_url": "https://picsum.photos/seed/deal1/400/200",
+      "valid_until": "2026-12-31"
+    },
+    "deal-2": {
+      "id": "deal-2",
+      "salon_id": "salon-2",
+      "title": "Spa package 20% off",
+      "description": "Full spa day package",
+      "discount_percent": 20,
+      "image_url": "https://picsum.photos/seed/deal2/400/200",
+      "valid_until": "2026-12-31"
+    }
+  },
+  "meta": {
+    "version": 1,
+    "updated_at": "2026-07-05"
+  }
+}
