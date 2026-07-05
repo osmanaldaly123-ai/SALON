@@ -44,12 +44,12 @@ class AppNetworkImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        placeholder: (_, __) => Container(
+        placeholder: (_, _) => Container(
           width: width,
           height: height,
           color: AppColors.border,
         ),
-        errorWidget: (_, __, ___) => placeholder,
+        errorWidget: (_, _, _) => placeholder,
       ),
     );
   }

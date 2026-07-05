@@ -10,7 +10,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class ApiClient {
   ApiClient({FlutterSecureStorage? storage, void Function()? onSessionExpired})
       : _storage = storage ?? const FlutterSecureStorage(),
-        _onSessionExpired = onSessionExpired,
         _dio = Dio(
           BaseOptions(
             baseUrl: AppConfig.apiBaseUrl,
@@ -22,6 +21,7 @@ class ApiClient {
             },
           ),
         ) {
+    _onSessionExpired = onSessionExpired;
     _dio.interceptors.addAll([
       AuthInterceptor(_storage),
       TokenRefreshInterceptor(

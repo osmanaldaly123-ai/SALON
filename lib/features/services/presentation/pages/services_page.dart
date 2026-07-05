@@ -43,7 +43,7 @@ class ServicesPage extends StatelessWidget {
               ServicesLoading() => ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: 6,
-                  itemBuilder: (_, __) => const ListTileShimmer(),
+                  itemBuilder: (_, _) => const ListTileShimmer(),
                 ),
               ServicesFailure(:final message) => AppErrorWidget(
                   message: ValidationMessages.resolveError(context, message),

@@ -74,6 +74,6 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
   @override
   Future<void> cancelBooking(String bookingId) async {
-    await _client.post(ApiConstants.bookingById(bookingId) + '/cancel');
+    await _client.post('${ApiConstants.bookingById(bookingId)}/cancel');
   }
 }

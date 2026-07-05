@@ -36,7 +36,7 @@ class ReviewsRemoteDataSourceImpl implements ReviewsRemoteDataSource {
       data: {
         'salon_id': salonId,
         'rating': rating,
-        if (comment != null) 'comment': comment,
+        'comment': ?comment,
       },
     );
     final data = response.data['data'] as Map<String, dynamic>? ??

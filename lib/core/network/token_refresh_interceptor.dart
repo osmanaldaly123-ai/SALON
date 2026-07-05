@@ -8,12 +8,10 @@ import '../constants/app_constants.dart';
 
 class TokenRefreshInterceptor extends QueuedInterceptor {
   TokenRefreshInterceptor({
-    required Dio dio,
-    required FlutterSecureStorage storage,
-    required void Function()? Function() getOnSessionExpired,
-  })  : _dio = dio,
-        _storage = storage,
-        _getOnSessionExpired = getOnSessionExpired;
+    required this._dio,
+    required this._storage,
+    required this._getOnSessionExpired,
+  });
 
   final Dio _dio;
   final FlutterSecureStorage _storage;

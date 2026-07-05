@@ -27,8 +27,8 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     final response = await _client.put(
       ApiConstants.profile,
       data: {
-        if (name != null) 'name': name,
-        if (phone != null) 'phone': phone,
+        'name': ?name,
+        'phone': ?phone,
       },
     );
     final data = response.data['data'] as Map<String, dynamic>? ??

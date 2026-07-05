@@ -43,7 +43,7 @@ class DealsPage extends StatelessWidget {
               DealsLoading() => ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: 4,
-                  itemBuilder: (_, __) => const ShimmerBox(
+                  itemBuilder: (_, _) => const ShimmerBox(
                     height: 180,
                     borderRadius: 16,
                   ),

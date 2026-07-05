@@ -101,7 +101,7 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
               BookingHistoryLoading() => ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: 4,
-                  itemBuilder: (_, __) => const ListTileShimmer(),
+                  itemBuilder: (_, _) => const ListTileShimmer(),
                 ),
               BookingHistoryFailure(:final message) => AppErrorWidget(
                   message:
@@ -116,7 +116,6 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                   tabs: [
                     ShadTab(
                       value: 'upcoming',
-                      child: Text(l10n.upcomingBookings),
                       content: _BookingList(
                         bookings: upcoming,
                         emptyMessage: l10n.noUpcomingBookings,
@@ -125,16 +124,17 @@ class _BookingHistoryPageState extends State<BookingHistoryPage> {
                         onRefresh: () =>
                             context.read<BookingHistoryCubit>().refresh(),
                       ),
+                      child: Text(l10n.upcomingBookings),
                     ),
                     ShadTab(
                       value: 'past',
-                      child: Text(l10n.pastBookings),
                       content: _BookingList(
                         bookings: past,
                         emptyMessage: l10n.noPastBookings,
                         onRefresh: () =>
                             context.read<BookingHistoryCubit>().refresh(),
                       ),
+                      child: Text(l10n.pastBookings),
                     ),
                   ],
                 ),

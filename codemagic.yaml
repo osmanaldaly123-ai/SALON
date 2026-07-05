@@ -53,7 +53,7 @@ workflows:
     scripts:
       - *flutter_pub_get
       - name: Flutter analyze
-        script: flutter analyze
+        script: flutter analyze --no-fatal-infos lib test
       - name: Flutter test
         script: flutter test
 

@@ -130,7 +130,7 @@ class _ReviewsBody extends StatelessWidget {
             ReviewsLoading() => ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: 5,
-                itemBuilder: (_, __) => const ListTileShimmer(),
+                itemBuilder: (_, _) => const ListTileShimmer(),
               ),
             ReviewsFailure(:final message) => AppErrorWidget(
                 message: ValidationMessages.resolveError(context, message),

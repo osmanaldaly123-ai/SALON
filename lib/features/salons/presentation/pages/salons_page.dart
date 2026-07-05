@@ -88,7 +88,7 @@ class _SalonsPageState extends State<SalonsPage> {
                               ListView.builder(
                                 padding: const EdgeInsets.all(16),
                                 itemCount: 6,
-                                itemBuilder: (_, __) => const SalonCardShimmer(),
+                                itemBuilder: (_, _) => const SalonCardShimmer(),
                               ),
                             SalonsFailure(:final message) => AppErrorWidget(
                                 message: ValidationMessages.resolveError(
