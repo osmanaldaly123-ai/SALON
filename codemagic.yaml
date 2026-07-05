@@ -132,6 +132,56 @@ workflows:
       - name: Flutter test
         script: flutter test
 
+  # ── Production: analyze + test, then Android APK + iOS IPA ──
+  flutter-release:
+    name: Flutter Release (Production)
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    environment:
+      <<: *environment_shared
+      groups:
+        - salon_production
+      android_signing:
+        - salon_upload_keystore
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.salonbooking.app
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+        - pattern: develop
+          include: true
+    scripts:
+      - *flutter_pub_get
+      - name: Flutter analyze
+        script: flutter analyze --no-fatal-infos lib test
+      - name: Flutter test
+        script: flutter test
+      - *print_build_info
+      - *setup_android_signing
+      - name: Build Android APK (release)
+        script: |
+          flutter build apk --release --dart-define=API_BASE_URL=$API_BASE_URL
+          ls -la build/app/outputs/flutter-apk/
+      - *install_ios_pods
+      - *setup_ios_signing
+      - name: Build iOS IPA (release)
+        script: |
+          flutter build ipa --release --dart-define=API_BASE_URL=$API_BASE_URL \
+            --export-options-plist="$HOME/export_options.plist"
+          ls -la build/ios/ipa/
+    artifacts: *production_artifacts
+    publishing:
+      email:
+        recipients:
+          - osmaneldaly515@gmail.com
+        notify:
+          success: true
+          failure: true
+
   # ── Production: Android APK + AAB ──
   production-android:
     name: Production — Android
